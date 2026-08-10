@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en" data-steampunk="foundry">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>steampunk-ui reference render</title>
+<style>
+/* ==========================================================================
+   Reference render for steampunk-ui.
+
+   Self-contained: no webfonts, no CDN, no third party. The font stack falls
+   back through what is already on the machine.
+
+   The honesty rule (SKILL.md section 10) applies to this page as much as to
+   anything it is demonstrating. So:
+     - The capacity gauge is bound to navigator.storage.estimate(), which is a
+       real reading from this browser. If the browser will not give one, the
+       panel says NO SIGNAL and the needle stays where it is.
+     - The cog turns only while that reading is actually in flight.
+     - The consignment ledger is fixed sample data, which is allowed. Nothing
+       on this page is randomised and nothing wobbles on a timer.
+   ========================================================================== */
+
+:root{
+  --inset:#0a0804;
+  --void:#14110d; --iron:#1c1813; --iron-2:#241f18; --iron-3:#2e2820;
+  --seam:#3a3227; --seam-lit:#4d4231;
+  --ink:#e8dfcd; --ink-dim:#a2937a; --ink-faint:#9d8f75;
+  --copper:#cd7c48; --brass:#c9a227; --brass-hi:#f0d891; --brass-lo:#7d6318;
+  --verdigris:#5f9e7d; --ember:#e8922a; --rust:#e86951;
+
+  --plate:linear-gradient(177deg,#2b241b 0%,#221d16 42%,#1b1712 100%);
+  --brass-plate:linear-gradient(176deg,#e6cf8a 0%,var(--brass) 38%,#8f7220 62%,#d8bd6a 100%);
+
+  --lit:inset 0 1px 0 rgb(240 216 145 / .07);
+  --sink:0 18px 34px -22px rgb(0 0 0 / .85);
+  --lamp:radial-gradient(1200px 620px at 12% -8%,rgb(201 162 39 / .09),transparent 62%),
+         radial-gradient(900px 520px at 108% 12%,rgb(205 124 72 / .07),transparent 58%);
+
+  --wash-brass:rgb(201 162 39 / .04);
+  --fill:18%;
+  --font-mono:'Monaspace Xenon','JetBrains Mono','IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --font-plate:Georgia,'Iowan Old Style','Times New Roman',serif;
+
+  --radius:3px; --radius-inner:2px;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --dur-state:250ms; --dur-settle:600ms; --dur-sweep:1500ms;
+}
+
+[data-steampunk="soot"]{--void:#0d0b08;--iron:#14110d;--iron-2:#1c1813;--iron-3:#241f18;--copper:#c9a227}
+[data-steampunk="blueprint"]{--brass:#7cbcd6;--brass-plate:linear-gradient(176deg,#b9dfec 0%,#7cbcd6 38%,#43809a 62%,#9dcfe2 100%)}
+[data-steampunk="verdigris"]{--copper:#5f9e7d;--brass:#7fbb9b;--brass-hi:#c3e3d2;--verdigris:#c9a227;--brass-plate:linear-gradient(176deg,#a9d6c0 0%,#7fbb9b 38%,#4a7d64 62%,#93c9ae 100%)}
+
+*{box-sizing:border-box}
+html{background:var(--void)}
+body{
+  margin:0; color:var(--ink);
+  font:13px/1.6 var(--font-mono);
+  background:var(--lamp),var(--void);
+  background-attachment:fixed;
+}
+/* Vignette: light added at the top, dark added at the edges. The half of the
+   lighting that gets forgotten, and without it a lit page just goes beige. */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:2;
+  background:
+    radial-gradient(120% 80% at 50% -10%,rgb(217 137 43 / .06),transparent 60%),
+    radial-gradient(140% 120% at 50% 120%,rgb(0 0 0 / .55),transparent 55%);
+}
+/* Grain on a fixed, non-interactive layer so scrolling never repaints it.
+   overlay blend rather than flat opacity, so it bites into the lit areas and
+   leaves the shadows alone, which is how grain behaves. */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:3;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+}
+
+/* Chrome. The default scrollbar is the most common leak in the aesthetic. */
+*{scrollbar-width:thin;scrollbar-color:var(--seam-lit) transparent}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:var(--inset)}
+*::-webkit-scrollbar-thumb{background:var(--seam-lit);border:2px solid var(--inset);border-radius:6px}
+*::-webkit-scrollbar-thumb:hover{background:var(--brass-lo)}
+::selection{background:rgb(201 162 39 / .25);color:var(--ink)}
+input{accent-color:var(--brass)}
+code.chip{background:var(--inset);border:1px solid var(--seam);border-radius:var(--radius-inner);
+          padding:3px 8px;color:var(--brass);user-select:all;font-size:11.5px}
+
+.wrap{max-width:1240px;margin:0 auto;padding:34px 22px 90px;position:relative;z-index:1}
+
+/* ── Nameplate ────────────────────────────────────────────────────────── */
+.head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--seam);
+}
+h1{
+  margin:0;font-family:var(--font-plate);font-size:30px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;
+  background:var(--brass-plate);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 1px 0 rgb(0 0 0 / .55);
+}
+.tagline{color:var(--ink-faint);font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin-top:2px}
+.whereis{font-size:12px;color:var(--ink-dim);text-align:right}
+.whereis b{color:var(--brass);font-weight:500}
+
+/* ── Plates ───────────────────────────────────────────────────────────── */
+.plate{
+  position:relative;background:var(--plate);
+  border:1px solid var(--seam);border-radius:var(--radius);
+  box-shadow:var(--lit),var(--sink);
+}
+.riveted::before,.riveted::after{
+  content:'';position:absolute;top:9px;bottom:9px;width:7px;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(circle at 50% 50%,var(--brass-hi) 0 1px,var(--brass-lo) 1.4px,transparent 2.4px);
+  background-size:7px 30px;background-repeat:repeat-y;
+}
+.riveted::before{left:8px}
+.riveted::after{right:8px}
+.plabel{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:12px 26px 0;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint);
+}
+.pbody{padding:14px 26px 20px}
+
+/* ── Grid ─────────────────────────────────────────────────────────────── */
+.rig{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:18px}
+@media (min-width:960px){.rig{grid-template-columns:.86fr 1.28fr}}
+
+/* ── Gauge ────────────────────────────────────────────────────────────── */
+.gaugewrap{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+#gauge{width:168px;height:168px;flex:none}
+.needle{transform-box:fill-box;transform-origin:50% 94.3%;transition:transform var(--dur-sweep) var(--ease)}
+.readouts{min-width:0;flex:1}
+.readout{font-size:30px;line-height:1.05;color:var(--brass-hi);font-variant-numeric:tabular-nums}
+.readout small{display:block;margin-top:5px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+.subreads{margin-top:15px;border-top:1px solid var(--seam);padding-top:11px;display:grid;gap:5px}
+.rd{display:flex;justify-content:space-between;gap:14px;font-size:12px}
+.rd span{color:var(--ink-faint);letter-spacing:.07em}
+.rd b{font-weight:500;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.rd b.ours{color:var(--brass)}
+.no-signal{color:var(--ink-faint);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+
+/* ── Intake ───────────────────────────────────────────────────────────── */
+#intake{
+  border:1px dashed var(--seam-lit);border-radius:var(--radius-inner);
+  padding:26px 22px;text-align:center;
+  background:linear-gradient(180deg,rgb(201 162 39 / .032),transparent 70%);
+}
+#intake h2{margin:0 0 5px;font-size:15px;font-weight:600;letter-spacing:.04em}
+#intake .hint{margin:0;color:var(--ink-faint);font-size:12.5px}
+#intake .hint b{color:var(--brass);font-weight:500}
+.cogline{display:flex;justify-content:center;margin-bottom:10px}
+.cog{animation:spin 9s linear infinite;animation-play-state:paused;opacity:.5;transition:opacity .4s}
+body.working .cog{animation-play-state:running;opacity:1}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.btns{margin-top:17px;display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+button{
+  font:inherit;font-size:12.5px;letter-spacing:.04em;cursor:pointer;color:var(--ink);
+  background:linear-gradient(180deg,var(--iron-3),var(--iron-2));
+  border:1px solid var(--seam-lit);border-radius:var(--radius-inner);padding:8px 15px;
+  box-shadow:inset 0 1px 0 rgb(240 216 145 / .09);
+  transition:transform .12s var(--ease),border-color var(--dur-state),color var(--dur-state),background var(--dur-state);
+}
+button:hover{border-color:var(--brass);color:var(--brass-hi)}
+button:active{transform:translateY(1px) scale(.985)}
+button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+button.lever{
+  background:var(--brass-plate);color:#241c05;border-color:var(--brass-lo);font-weight:700;
+  text-shadow:0 1px 0 rgb(255 255 255 / .28);
+}
+button.lever:hover{color:#1a1404;filter:brightness(1.07)}
+button.tiny{padding:3px 9px;font-size:11px;color:var(--ink-faint)}
+button.tiny:hover{color:var(--brass-hi)}
+
+.switches{margin-top:14px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+label.sw{display:inline-flex;gap:8px;align-items:center;color:var(--ink-faint);font-size:11.5px;cursor:pointer;letter-spacing:.05em}
+label.sw input{accent-color:var(--brass)}
+.note{margin-top:13px;font-size:11.5px;color:var(--copper)}
+
+/* ── Consignments ─────────────────────────────────────────────────────── */
+.row{padding:11px 0;border-top:1px solid var(--seam)}
+.row:first-child{border-top:none}
+.rowtop{display:flex;gap:12px;align-items:baseline}
+.rname{flex:1;min-width:0;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rmeta{font-size:11.5px;color:var(--ink-faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+.why{margin-top:6px;font-size:11.5px;color:var(--rust)}
+.hash{margin-top:6px;font-size:11px;color:var(--ink-faint);word-break:break-all}
+
+.pipe{height:5px;margin-top:8px;border-radius:var(--radius-inner);overflow:hidden;
+      background:var(--void);box-shadow:inset 0 1px 2px rgb(0 0 0 / .75)}
+.pipe i{display:block;height:100%;background:linear-gradient(90deg,var(--brass-lo),var(--brass));
+        transition:width var(--dur-state) var(--ease)}
+.st-working .pipe i{
+  background:linear-gradient(90deg,var(--copper),var(--brass-hi),var(--copper));
+  background-size:200% 100%;animation:slide 1.15s linear infinite;
+}
+@keyframes slide{to{background-position:-200% 0}}
+.st-good .pipe i{background:linear-gradient(90deg,#3f6f57,var(--verdigris))}
+.st-bad .pipe i{background:linear-gradient(90deg,#7d3226,var(--rust))}
+
+.stamp{font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:2px 7px;
+       border:1px solid currentColor;border-radius:var(--radius-inner);white-space:nowrap}
+.s-verified{color:var(--verdigris);animation:thud .45s var(--ease) both}
+.s-stored{color:var(--brass)}
+.s-working{color:var(--copper)}
+.s-bad{color:var(--rust);animation:thud .45s var(--ease) both}
+@keyframes thud{0%{transform:scale(1.5) rotate(-5deg);opacity:0}100%{transform:none;opacity:1}}
+
+/* ── The board ────────────────────────────────────────────────────────── */
+table{width:100%;border-collapse:collapse}
+th{background:var(--iron-2);color:var(--ink-faint);font-size:10px;font-weight:400;
+   letter-spacing:.18em;text-transform:uppercase;text-align:left;padding:7px 10px;
+   border-bottom:1px solid var(--seam-lit);white-space:nowrap}
+td{padding:9px 10px;border-top:1px solid var(--seam);font-size:12.5px;white-space:nowrap}
+tbody tr:first-child td{border-top:none}
+tbody tr:hover td{background:var(--wash-brass)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+th.num{text-align:right}
+.ident{color:var(--copper)}
+.tbl-wrap{overflow-x:auto}
+
+/* Liveness lamps: powered by the thing they report on, so a dead one is DARK.
+   (An alarm lamp is the other convention: lit by the fault, and flashing.
+   Pick one per product; this board uses liveness.) */
+.lamp{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.lamp-live{background:var(--verdigris);box-shadow:0 0 10px var(--verdigris);animation:breathe 2s ease-in-out infinite}
+.lamp-warn{background:var(--ember)}
+.lamp-fail{background:var(--rust)}
+.lamp-none{background:var(--seam-lit)}
+@keyframes breathe{0%,100%{opacity:1;box-shadow:0 0 10px var(--verdigris)}50%{opacity:.4;box-shadow:none}}
+
+/* Lamp pill: for a roster scanned all at once, where you need a shape rather
+   than a word. Fill mixed with --inset, never with the surface, so it reads as
+   stamped INTO the plate and every token stays above 4.6:1. */
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px 3px 6px;
+      border:1px solid var(--seam);border-radius:var(--radius-inner);
+      font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);
+      transition:border-color var(--dur-state),color var(--dur-state)}
+.pill:hover{border-color:var(--brass);color:var(--ink)}
+.pill-ok{color:var(--verdigris);background:color-mix(in srgb,var(--verdigris) var(--fill),var(--inset));border-color:color-mix(in srgb,var(--verdigris) 30%,var(--inset))}
+.pill-warn{color:var(--ember);background:color-mix(in srgb,var(--ember) var(--fill),var(--inset));border-color:color-mix(in srgb,var(--ember) 30%,var(--inset))}
+.pill-bad{color:var(--rust);background:color-mix(in srgb,var(--rust) var(--fill),var(--inset));border-color:color-mix(in srgb,var(--rust) 30%,var(--inset))}
+.pill-none{color:var(--ink-faint);background:var(--inset)}
+
+/* Hazard tape. Marks a real boundary: below it, controls that mutate the hold. */
+.hazard{height:4px;flex-shrink:0;opacity:.65;margin:0 -26px 14px;
+        background:repeating-linear-gradient(-45deg,var(--ember) 0 12px,#1a1408 12px 24px)}
+
+/* Overprint: a document-level verdict. Screen blend so it reads as ink ON the
+   page rather than a box floating above it. */
+.overprint{position:absolute;top:14px;right:18px;transform:rotate(-8deg);
+           padding:5px 10px 3px;border:2px solid currentColor;border-radius:4px;
+           color:var(--ember);text-align:center;text-transform:uppercase;
+           opacity:.82;mix-blend-mode:screen;pointer-events:none}
+.overprint b{display:block;font-size:15px;font-weight:700;letter-spacing:.14em;line-height:1}
+.overprint s{display:block;font-size:9px;letter-spacing:.22em;text-decoration:none}
+
+/* Section marker: a lit rivet head seen square-on. */
+.b-h{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding-bottom:6px;
+     border-bottom:1px solid var(--seam);color:var(--brass);
+     font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.b-h::before{content:'';width:9px;height:9px;flex-shrink:0;background:var(--brass);
+             transform:rotate(45deg);box-shadow:0 0 6px rgb(201 162 39 / .5)}
+
+.empty{text-align:center;padding:26px 10px;color:var(--ink-faint)}
+.empty svg{opacity:.35}
+.empty p{margin:10px 0 0;font-size:12.5px;letter-spacing:.05em}
+
+/* ── Switcher ─────────────────────────────────────────────────────────── */
+.switcher{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.switcher button{font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px;
+                 background:transparent;color:var(--ink-faint);box-shadow:none}
+.switcher button[aria-pressed="true"]{color:var(--brass-hi);border-color:var(--brass)}
+
+footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--seam);
+       color:var(--ink-faint);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+       display:flex;gap:18px;flex-wrap:wrap}
+
+.rise{opacity:0;transform:translateY(10px);animation:rise .6s var(--ease) forwards;
+      animation-delay:calc(var(--i,0) * 80ms)}
+@keyframes rise{to{opacity:1;transform:none}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .rise{animation:none;opacity:1;transform:none}
+  .needle{transition:none}
+  .cog{animation:none !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head rise" style="--i:0">
+    <div>
+      <h1>Foundry&#8202;-&#8202;Relay</h1>
+      <div class="tagline">Signal station &middot; reference render</div>
+    </div>
+    <div class="whereis">
+      <div>consignments settle in <code class="chip">/var/hold</code></div>
+      <nav class="switcher" aria-label="Palette variant" style="margin-top:8px;justify-content:flex-end">
+        <button aria-pressed="true"  data-v="foundry">Foundry</button>
+        <button aria-pressed="false" data-v="soot">Soot</button>
+        <button aria-pressed="false" data-v="blueprint">Blueprint</button>
+        <button aria-pressed="false" data-v="verdigris">Verdigris</button>
+      </nav>
+    </div>
+  </div>
+
+  <div class="rig">
+    <!-- ─────────────────────────────────────────── capacity, a real reading -->
+    <section class="plate riveted rise" style="--i:1">
+      <div class="plabel"><span>Capacity</span><span id="pctfree">&mdash;</span></div>
+      <div class="pbody gaugewrap">
+        <svg id="gauge" viewBox="0 0 200 200" aria-hidden="true">
+          <defs>
+            <linearGradient id="bez" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#e6cf8a"/><stop offset=".45" stop-color="#c9a227"/>
+              <stop offset=".62" stop-color="#8f7220"/><stop offset="1" stop-color="#d8bd6a"/>
+            </linearGradient>
+            <radialGradient id="face" cx="50%" cy="38%" r="72%">
+              <stop offset="0" stop-color="#2b251c"/><stop offset="1" stop-color="#171310"/>
+            </radialGradient>
+          </defs>
+          <circle cx="100" cy="100" r="94" fill="url(#bez)"/>
+          <circle cx="100" cy="100" r="84" fill="url(#face)" stroke="#3a3227"/>
+          <g id="ticks"></g>
+          <path id="arcUsed" fill="none" stroke="#4d4231" stroke-width="7" stroke-linecap="round"/>
+          <path id="arcMine" fill="none" stroke="#c9a227" stroke-width="7" stroke-linecap="round"/>
+          <!-- Bone, not red. Red is reserved for things that have gone wrong. -->
+          <polygon id="needle" class="needle" points="100,34 96.6,104 103.4,104" fill="#e8dfcd"/>
+          <circle cx="100" cy="100" r="9" fill="url(#bez)" stroke="#241c05"/>
+          <circle cx="100" cy="100" r="3" fill="#241c05"/>
+          <text x="100" y="150" text-anchor="middle" font-family="ui-monospace,monospace"
+                font-size="9" letter-spacing="2.4" fill="#9d8f75">FREE</text>
+        </svg>
+        <div class="readouts">
+          <div class="readout"><span id="free">&mdash;</span><small>remaining</small></div>
+          <div class="subreads">
+            <div class="rd"><span>Held here</span><b class="ours" id="used">&mdash;</b></div>
+            <div class="rd"><span>Whole quota</span><b id="quota">&mdash;</b></div>
+            <div class="rd"><span>Source</span><b id="src">browser storage estimate</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────── intake -->
+    <section class="plate riveted rise" style="--i:2">
+      <div class="plabel"><span>Intake</span><span>/var/hold</span></div>
+      <div class="pbody">
+        <div id="intake">
+          <div class="cogline">
+            <!-- Turns only while a reading is actually in flight. -->
+            <svg class="cog" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="1.5" aria-hidden="true">
+              <path d="M12 15.6a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2Z"/>
+              <path d="M19.5 12c0-.6-.06-1.16-.18-1.71l2.06-1.5-2-3.46-2.4.98a7.7 7.7 0 0 0-2.96-1.72L13.7 2h-3.4l-.32 2.59a7.7 7.7 0 0 0-2.96 1.72l-2.4-.98-2 3.46 2.06 1.5a7.9 7.9 0 0 0 0 3.42l-2.06 1.5 2 3.46 2.4-.98a7.7 7.7 0 0 0 2.96 1.72L10.3 22h3.4l.32-2.59a7.7 7.7 0 0 0 2.96-1.72l2.4.98 2-3.46-2.06-1.5c.12-.55.18-1.11.18-1.71Z"/>
+            </svg>
+          </div>
+          <h2>Take a reading</h2>
+          <p class="hint">The dial is bound to <b>navigator.storage.estimate()</b>, which is a real figure from this browser. Nothing on this page is invented.</p>
+          <div class="btns">
+            <button class="lever" id="read">Pull the lever</button>
+            <button id="dropout">Simulate a dead probe</button>
+          </div>
+          <div class="switches">
+            <label class="sw"><input type="checkbox" id="sweep" checked> sweep the needle</label>
+            <label class="sw"><input type="checkbox" id="arcs" checked> show composition arcs</label>
+          </div>
+          <div class="note" id="note">&nbsp;</div>
+        </div>
+
+        <!-- The hazard stripe marks a real boundary: everything under it writes
+             to the hold. It is not here because stripes look industrial. -->
+        <div class="hazard" style="margin-top:18px" role="separator" aria-label="Destructive controls below"></div>
+        <div class="b-h">Irreversible</div>
+        <div class="pills">
+          <span class="pill pill-bad">purge the hold</span>
+          <span class="pill pill-warn">rotate signing key</span>
+          <span class="pill pill-none">detach station</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ───────────────────────────────────────────────────── consignments -->
+  <section class="plate riveted rise" style="--i:3;margin-bottom:18px">
+    <div class="overprint"><s>station 18100</s><b>sample</b><s>10 aug 2026</s></div>
+    <div class="plabel"><span>Consignment ledger</span><span>6 entries &middot; 1 needs attention</span></div>
+    <div class="pbody" id="ledger"></div>
+  </section>
+
+  <!-- ────────────────────────────────────────────────────────── the board -->
+  <div class="rig" style="grid-template-columns:1fr">
+    <section class="plate riveted rise" style="--i:4">
+      <div class="plabel"><span>The board</span><span>5 stations</span></div>
+      <div class="pbody tbl-wrap">
+        <table>
+          <thead>
+            <tr><th style="width:20px"></th><th>Station</th><th>Route</th>
+                <th class="num">Consignments</th><th class="num">Last heard</th><th>State</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="lamp lamp-live"></span></td><td class="ident">relay-eu-1</td><td>helsinki &rarr; frankfurt</td><td class="num">18 412</td><td class="num">2 s</td><td><span class="stamp s-verified">running</span></td></tr>
+            <tr><td><span class="lamp lamp-live"></span></td><td class="ident">relay-eu-2</td><td>helsinki &rarr; amsterdam</td><td class="num">9 006</td><td class="num">3 s</td><td><span class="stamp s-verified">running</span></td></tr>
+            <tr><td><span class="lamp lamp-warn"></span></td><td class="ident">relay-us-3</td><td>ashburn &rarr; dallas</td><td class="num">6 733</td><td class="num">41 s</td><td><span class="stamp s-working">lagging</span></td></tr>
+            <tr><td><span class="lamp lamp-fail"></span></td><td class="ident">relay-ap-2</td><td>singapore &rarr; sydney</td><td class="num">1 147</td><td class="num">14 min</td><td><span class="stamp s-bad">exit 137</span></td></tr>
+            <tr><td><span class="lamp lamp-none"></span></td><td class="ident">relay-sa-1</td><td>s&atilde;o paulo &rarr; santiago</td><td class="num"><span class="no-signal">no signal</span></td><td class="num"><span class="no-signal">&mdash;</span></td><td><span class="stamp" style="color:var(--ink-faint);border-color:var(--seam-lit)">unheard</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <span>steampunk-ui reference render</span>
+    <span>brass, not gold</span>
+    <span>oxidation, not damage</span>
+    <span>an instrument, not a costume</span>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+/* ── Gauge ────────────────────────────────────────────────────────────── */
+const A0 = -125, A1 = 125;                 // a real instrument sweeps ~250 degrees
+const pol = (cx, cy, r, deg) => {
+  const a = (deg - 90) * Math.PI / 180;
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+};
+function arc(r, from, to) {
+  const [x0,y0] = pol(100,100,r,from), [x1,y1] = pol(100,100,r,to);
+  return `M${x0.toFixed(2)},${y0.toFixed(2)} A${r},${r} 0 ${to-from>180?1:0} 1 ${x1.toFixed(2)},${y1.toFixed(2)}`;
+}
+(function ticks() {
+  const g = $("ticks");
+  for (let i = 0; i <= 10; i++) {
+    const deg = A0 + (A1 - A0) * i / 10;
+    const major = i % 5 === 0;
+    const [x0,y0] = pol(100,100, major ? 62 : 68, deg);
+    const [x1,y1] = pol(100,100, 74, deg);
+    const l = document.createElementNS("http://www.w3.org/2000/svg","line");
+    l.setAttribute("x1",x0.toFixed(2)); l.setAttribute("y1",y0.toFixed(2));
+    l.setAttribute("x2",x1.toFixed(2)); l.setAttribute("y2",y1.toFixed(2));
+    l.setAttribute("stroke", major ? "#f0d891" : "#9d8f75");
+    l.setAttribute("stroke-width", major ? "2.2" : "1.2");
+    g.appendChild(l);
+  }
+})();
+
+function human(b) {
+  if (b == null) return "—";
+  const u = ["B","KiB","MiB","GiB","TiB"];
+  let i = 0, v = b;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return i === 0 ? `${b} B` : `${v.toFixed(1)} ${u[i]}`;
+}
+
+function noSignal(why) {
+  // The needle KEEPS ITS POSITION. A needle swept to zero is a reading, and a
+  // reading is exactly what we do not have.
+  $("free").innerHTML = '<span class="no-signal">no signal</span>';
+  $("used").innerHTML = '<span class="no-signal">—</span>';
+  $("quota").innerHTML = '<span class="no-signal">—</span>';
+  $("pctfree").innerHTML = '<span class="no-signal">no signal</span>';
+  $("src").textContent = why;
+  $("note").textContent = "The dial is holding its last position on purpose.";
+}
+
+async function takeReading() {
+  document.body.classList.add("working");   // the cog turns, because work is in flight
+  $("note").textContent = "";
+  try {
+    if (!navigator.storage || !navigator.storage.estimate) {
+      noSignal("this browser offers no estimate"); return;
+    }
+    const e = await navigator.storage.estimate();
+    if (e.quota == null) { noSignal("the browser withheld a quota"); return; }
+
+    const free = Math.max(0, e.quota - (e.usage || 0));
+    const frac = e.quota ? free / e.quota : 0;
+
+    $("free").textContent  = human(free);
+    $("used").textContent  = human(e.usage || 0);
+    $("quota").textContent = human(e.quota);
+    $("pctfree").textContent = (frac * 100).toFixed(1) + "% free";
+    $("src").textContent = "browser storage estimate";
+
+    const span = A1 - A0;
+    $("needle").style.transition = $("sweep").checked
+      ? `transform var(--dur-sweep) var(--ease)` : "none";
+    $("needle").style.transform = `rotate(${(A0 + span * frac).toFixed(2)}deg)`;
+
+    // The 0.004 floor keeps a genuine zero from vanishing into a round linecap.
+    const show = $("arcs").checked;
+    $("arcUsed").setAttribute("d", show ? arc(74, A0, A0 + span * Math.max(1 - frac, 0.004)) : "");
+    $("arcMine").setAttribute("d", show ? arc(74, A0, A0 + span * Math.max((e.usage||0)/e.quota, 0.004)) : "");
+  } catch (err) {
+    noSignal("the probe threw: " + err.name);
+  } finally {
+    // Held briefly so the cog is visible; the sweep itself is still running.
+    setTimeout(() => document.body.classList.remove("working"), 700);
+  }
+}
+
+$("read").onclick = takeReading;
+$("dropout").onclick = () => noSignal("probe deliberately disconnected");
+
+/* ── Consignment ledger. Fixed sample data, not randomised. ───────────── */
+const CONSIGNMENTS = [
+  { name: "/var/hold/2026-08-10/blocks-21447902.par", bytes: 418_923_264, pct: 100, state: "verified",
+    sha: "a3f19c04e8b27d5106fa4c9318be7720d54ff8a19c3e02b6748d5c1f9ae30bb2" },
+  { name: "/var/hold/2026-08-10/receipts-eu-1.jsonl", bytes: 92_274_688, pct: 100, state: "verified",
+    sha: "7c0e5b8144d92af36e1b0c7758a2fd41903e6cb25d8f7104ba3c69e05f2d817a" },
+  { name: "/var/hold/2026-08-10/traces-us-3.par", bytes: 611_450_880, pct: 64, state: "working" },
+  { name: "/var/hold/2026-08-10/traces-ap-2.par", bytes: 233_308_160, pct: 100, state: "stored",
+    why: "length checked; checksum skipped by request" },
+  { name: "/var/hold/2026-08-09/blocks-21440118.par", bytes: 402_653_184, pct: 100, state: "verified",
+    sha: "12b7fe33c0a94d8e5719f2064cba38d7710e5f9a4c86b2013de7f45a09cc6188" },
+  { name: "/var/hold/2026-08-09/receipts-sa-1.jsonl", bytes: 4_194_304, pct: 100, state: "corrupt",
+    why: "checksums disagree, the copy on the far side was deleted, send it again" },
+];
+
+const STAMP = {
+  verified: ["s-verified","verified","st-good"],
+  stored:   ["s-stored","stored","st-good"],
+  working:  ["s-working","in transit","st-working"],
+  corrupt:  ["s-bad","corrupt","st-bad"],
+};
+
+(function ledger() {
+  const box = $("ledger");
+  if (!CONSIGNMENTS.length) {
+    box.innerHTML = `<div class="empty">
+      <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="1.2">
+        <path d="M3 8.5 12 4l9 4.5v7L12 20l-9-4.5v-7Z"/><path d="m3 8.5 9 4.5 9-4.5M12 13v7"/></svg>
+      <p>Nothing stowed here yet. Drop something into the intake above.</p></div>`;
+    return;
+  }
+  CONSIGNMENTS.forEach(c => {
+    const [cls, word, pipeCls] = STAMP[c.state];
+    const row = document.createElement("div");
+    row.className = "row " + pipeCls;
+    row.innerHTML =
+      `<div class="rowtop">
+         <span class="rname">${c.name}</span>
+         <span class="stamp ${cls}">${word}</span>
+         <span class="rmeta">${human(c.bytes)}${c.state === "working" ? " · " + c.pct + "%" : ""}</span>
+       </div>
+       <div class="pipe"><i style="width:${c.pct}%"></i></div>` +
+      (c.why ? `<div class="why">${c.why}</div>` : "") +
+      (c.sha ? `<div class="hash">sha256 ${c.sha}</div>` : "");
+    box.appendChild(row);
+  });
+})();
+
+/* ── Variant switcher. Flips a real attribute; invents nothing. ───────── */
+document.querySelector(".switcher").addEventListener("click", function (e) {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  document.documentElement.dataset.steampunk = btn.dataset.v;
+  this.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+});
+
+takeReading();
+</script>
+</body>
+</html>

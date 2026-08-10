@@ -1,0 +1,172 @@
+/* ==========================================================================
+   steampunk-ui : Foundry (canonical)
+   --------------------------------------------------------------------------
+   Reconciled from five independently built steampunk interfaces, then tuned so
+   every ink and signal token clears WCAG AA (4.5:1) against ALL FOUR surfaces,
+   not merely against the page ground.
+
+   Verify any change with tools/contrast.py before committing it.
+
+   Note there is no --gold. "Brass, not gold" is meant literally: gold is not a
+   working metal and a gold token is the first step back toward cosplay. What
+   reads as gold is polished brass catching light, which is --brass-hi.
+   ========================================================================== */
+
+:root {
+  /* --- Surfaces -----------------------------------------------------------
+     Soot and lamp-oil, never pure black, never neutral grey. Four planes
+     rather than three: buttons and inset controls need somewhere to sit that
+     is not the panel they are on. */
+  --inset:     #0a0804;   /* BELOW the page: wells, tracks, code blocks      */
+  --void:      #14110d;   /* page                                            */
+  --iron:      #1c1813;   /* panels                                          */
+  --iron-2:    #241f18;   /* panel headers, table header rows                */
+  --iron-3:    #2e2820;   /* buttons, raised controls, hover                 */
+  --seam:      #3a3227;   /* hairlines, internal dividers                    */
+  --seam-lit:  #4d4231;   /* structural borders, control outlines            */
+  /* --inset is the only plane below the page. Anything cut INTO the machine
+     rather than sitting on it goes here: pipe tracks, code chips, log wells,
+     scrollbar troughs. Without it, a "recessed" element is just a dark box. */
+
+  /* --- Ink ----------------------------------------------------------------
+     Aged paper, never white.                    min ratio over all 4 planes */
+  --ink:       #e8dfcd;   /* body text, the default                  11.02   */
+  --ink-dim:   #a2937a;   /* secondary, metadata                      4.85   */
+  --ink-faint: #9d8f75;   /* labels, units, captions                  4.60   */
+
+  /* --- Signal metals ------------------------------------------------------
+     Three tiers, three jobs, no overlap. This hierarchy is what stops the
+     palette reading as a brown mess. */
+  --copper:    #cd7c48;   /* DATA: values, hashes, identifiers        4.56   */
+  --brass:     #c9a227;   /* STRUCTURE: labels, framing, the accent   6.03   */
+  --brass-hi:  #f0d891;   /* ATTENTION: active, live, the one figure 10.37   */
+  --brass-lo:  #7d6318;   /* gradient stops and engraved edges only          */
+  /* --brass-lo is NOT a text colour. It exists to give the plate gradient
+     its specular rolloff and to darken a lever's border. */
+
+  /* --- Oxidation (status) -------------------------------------------------
+     Not imported semantic colours. What these metals actually do when they
+     corrode, which is why they harmonise with no tuning. */
+  --verdigris: #5f9e7d;   /* healthy, verified, live                  4.63   */
+  --ember:     #e8922a;   /* warning, degraded, in progress           5.95   */
+  --rust:      #e86951;   /* error, failed, corrupt                   4.56   */
+  --olive:     #8fab45;   /* OPTIONAL fourth: go / pass / 2xx         5.61   */
+  /* Reach for --olive only when you need verdigris to mean INFORMATION
+     (links, GET, a neutral note) and therefore need a separate GO. In a
+     three-state system it is one hue too many, so leave it out. */
+
+  /* Status fills. Mixed with --inset rather than with the surface, so a pill
+     reads as stamped INTO the plate. Mixing with the surface lightens the
+     backdrop and pushes the mid-luminance tokens below AA; this does not. */
+  --fill: 18%;   /* used as color-mix(in srgb, var(--rust) var(--fill), var(--inset)) */
+
+  /* --- Plates -------------------------------------------------------------
+     How you draw metal. The four-stop brass ramp is a specular curve: bright,
+     body, a dark rolloff at 62%, then a returning highlight. Three stops is
+     a beige smear; four stops is a sheet of brass. */
+  --plate:       linear-gradient(177deg, #2b241b 0%, #221d16 42%, #1b1712 100%);
+  --brass-plate: linear-gradient(176deg, #e6cf8a 0%, var(--brass) 38%,
+                                         #8f7220 62%, #d8bd6a 100%);
+
+  /* --- Light --------------------------------------------------------------
+     Not shadow. There are no hard shadows in this system; there is a lit top
+     edge and a very soft, far-offset ambient sink underneath. */
+  --lit:   inset 0 1px 0 rgb(240 216 145 / .07);   /* the edge catching light */
+  --sink:  0 18px 34px -22px rgb(0 0 0 / .85);     /* ambient occlusion       */
+  --glint: rgb(240 216 145 / .2);                  /* hairline top-edge glint */
+
+  /* Lamp light falling across the bench. Apply to body with
+     background-attachment: fixed, over --void. */
+  --lamp: radial-gradient(1200px 620px at 12% -8%,  rgb(201 162 39 / .09), transparent 62%),
+          radial-gradient( 900px 520px at 108% 12%, rgb(205 124 72 / .07), transparent 58%);
+
+  /* The other half of the lighting, and the half most often forgotten: light
+     added at the top, dark added at the edges. Goes on a fixed overlay layer,
+     NOT on the body background, so it sits above the content. */
+  --vignette: radial-gradient(120% 80%  at 50% -10%, rgb(217 137 43 / .06), transparent 60%),
+              radial-gradient(140% 120% at 50% 120%, rgb(0 0 0 / .55),      transparent 55%);
+
+  /* --- Washes ------------------------------------------------------------- */
+  --wash-brass: rgb(201 162 39 / .04);   /* row hover                        */
+  --wash-seam:  rgb(58 50 39 / .55);     /* soft cell divider                */
+
+  /* --- Type ---------------------------------------------------------------
+     Monospace is the BODY face, not an accent: an instrument panel is set in
+     the face the machine can print. The serif is for ENGRAVING only, which
+     means the nameplate and nothing else. */
+  --font-mono:    'Monaspace Xenon', 'JetBrains Mono', 'IBM Plex Mono',
+                  ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-plate:   Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  --font-display: 'Oswald', 'Archivo Narrow', 'Saira Condensed', sans-serif;
+
+  --size-label:  10px;   /* uppercase, tracked, --ink-faint */
+  --size-micro:  11px;   /* badges, stamps, sub-lines       */
+  --size-body:   13px;   /* body and data                   */
+  --size-value:  30px;   /* the primary readout             */
+
+  --track-label: .18em;
+  --track-plate: .24em;  /* nameplates and panel labels     */
+
+  /* --- Geometry -----------------------------------------------------------
+     Machined, not moulded. 3px is the ceiling on a plate, 2px on everything
+     inside it. Never rounded-full on a container. */
+  --radius:       3px;
+  --radius-inner: 2px;
+  --pad-plate:    14px 26px 20px;
+  --pad-cell:     9px 10px;
+  --gap:          18px;
+
+  /* --- Motion -------------------------------------------------------------
+     Brass has inertia and friction. Continuous values SETTLE and never
+     overshoot; discrete events (a stamp landing) may arrive with impact.
+     See SKILL.md section 7 for the distinction, which is load-bearing. */
+  --ease:       cubic-bezier(.16, 1, .3, 1);
+  --dur-state:  250ms;
+  --dur-settle: 600ms;
+  --dur-sweep:  1500ms;   /* a needle crossing its dial */
+}
+
+/* --- Reduced motion: a machine at rest is still --------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ==========================================================================
+   Variants. Apply ONE to :root or a wrapper. Never mix two.
+   See reference/variants.md for when each is appropriate.
+   ========================================================================== */
+
+/* Soot: copper dropped, ground pushed deeper, two tiers instead of three.
+   For CLI output, log views, anything text-dominant. */
+[data-steampunk="soot"] {
+  --void:   #0d0b08;
+  --iron:   #14110d;
+  --iron-2: #1c1813;
+  --iron-3: #241f18;
+  --copper: #c9a227;   /* collapsed into brass */
+}
+
+/* Blueprint: oxidised teal as a cool counterpoint to the rust. Structure goes
+   cool, data stays warm. For schematics, topology maps, diagrams. */
+[data-steampunk="blueprint"] {
+  --oxide: #7cbcd6;    /* 4.62 min over the four planes */
+  --brass: #7cbcd6;
+  --brass-plate: linear-gradient(176deg, #b9dfec 0%, #7cbcd6 38%,
+                                         #43809a 62%, #9dcfe2 100%);
+}
+
+/* Verdigris: oxidation-forward, weathered rather than polished. Marketing
+   surfaces, not instruments. Note the status swap: once green carries
+   structure it can no longer also mean healthy. */
+[data-steampunk="verdigris"] {
+  --copper:    #5f9e7d;
+  --brass:     #7fbb9b;
+  --brass-hi:  #c3e3d2;
+  --verdigris: #c9a227;
+  --brass-plate: linear-gradient(176deg, #a9d6c0 0%, #7fbb9b 38%,
+                                         #4a7d64 62%, #93c9ae 100%);
+}
