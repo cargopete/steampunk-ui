@@ -1,0 +1,16 @@
+# yatr - https://github.com/cargopete/yatr
+#
+# A skill and its reference files; the palette validator is the only thing to run.
+
+[settings]
+cache = true
+
+[tasks.contrast]
+desc = "Every token of the four shipped variants against every surface, AA or fail"
+run = ["python3 tools/contrast.py"]
+sources = ["tools/contrast.py"]
+
+[tasks.ci]
+desc = "The palette check"
+depends = ["contrast"]
+run = []
